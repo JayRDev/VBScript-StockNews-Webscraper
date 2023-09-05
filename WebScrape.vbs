@@ -1,11 +1,12 @@
 ' Declare the objXMLHTTP variable to hold the HTTP request object
-Dim objXMLHTTP
+Dim objXMLHTTP, objShell, headline, strURL, htmlDoc, headlines
 
 ' Initialize an array of URLs for the news websites we want to scrape
-Dim strURLs(2)
-strURLs(0) = "https://www.bbc.co.uk/"
-strURLs(1) = "https://www.cnn.com/"
-strURLs(2) = "https://www.nytimes.com/"
+Dim strURLs
+strURLs = Array("https://www.bbc.co.uk/", "https://www.cnn.com/", "https://www.nytimes.com/")
+
+' Create a shell object to run external commands
+Set objShell = CreateObject("WScript.Shell")
 
 ' Loop through each URL in the strURLs array
 For Each strURL In strURLs
@@ -38,6 +39,28 @@ For Each strURL In strURLs
     ' Loop through each "h2" element and output its inner text
     For Each headline In headlines
         WScript.Echo headline.innerText
+
+        ' ... (rest of your code)
+        Dim cmd
+        cmd = ".\myenv\Scripts\python.exe .\sentiment_analysis.py " & Chr(34) & headline.innerText & Chr(34)
+
+        ' Call the Python script to perform sentiment analysis and capture the output
+        On Error Resume Next
+        Set objExec = objShell.Exec(cmd)
+        ' ... (rest of your code)
+
+        
+        If Err.Number <> 0 Then
+            WScript.Echo "Failed to run command: " & cmd
+            WScript.Echo "Error " & Err.Number & ": " & Err.Description
+            Err.Clear
+        Else
+            ' Loop to make sure we capture all output
+            Do While Not objExec.StdOut.AtEndOfStream
+                WScript.Echo objExec.StdOut.ReadLine()
+            Loop
+        End If
+        On Error GoTo 0
     Next
 
     ' Add a blank line for readability between sets of headlines from different URLs
